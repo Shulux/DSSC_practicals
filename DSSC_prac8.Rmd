@@ -1,0 +1,68 @@
+---
+title: "DSSC Practical 8"
+author: "qvns53"
+date: "2024-03-04"
+output:
+  pdf_document:
+    toc: true
+  html_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 5.11 Covid-19 Reporting
+
+```{r, echo=FALSE, include=FALSE}
+data <- read.csv("https://api.coronavirus.data.gov.uk/v2/data?areaType=nhsRegion&metric=cumAdmissionsByAge&format=csv")
+data$date <- as.Date(data$date)
+data$age <- ordered(data$age, levels = c("0_to_5", "6_to_17", "18_to_64", "65_to_84", "85+"))
+```
+
+The data used is sourced from [GOV UK](https://coronavirus.data.gov.uk/details/download).
+
+The following are graphs to show the rate of each age group over time.
+
+```{r , echo=FALSE}
+library("ggplot2")
+
+
+ggplot(data, aes(x = date, y = rate, colour = areaName)) +
+  facet_wrap(~ age, scales = "free") +
+  geom_line()
+
+```
+
+```{r , include=FALSE}
+library("tidyverse")
+
+data.regions <- data |> 
+  mutate(total_pop = 100000*value/rate) |> 
+  group_by(date, areaName) |> 
+  summarise(total_rate = sum(value)/sum(total_pop)*100000)
+```
+
+```{r, echo=FALSE, warning=FALSE}
+library("ggplot2")
+
+ggplot(data.regions, aes(x = date, y = total_rate, colour = areaName)) +
+  geom_line()
+
+```
+
+```{r, include=FALSE}
+
+recent_rates_ne <- data |> 
+  filter(areaName == "North East and Yorkshire" & date >= max(date) - 7)
+
+recent_rates_ne_wide <- recent_rates_ne |> 
+  select(date, age, rate) |> 
+  pivot_wider(names_from = age, values_from = rate, names_sort = TRUE)
+
+```
+
+```{r, echo=FALSE}
+knitr::kable(recent_rates_ne_wide)
+```
