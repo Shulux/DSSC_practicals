@@ -134,7 +134,15 @@ california.connecticut.texas |>
 
 ### Q11.6
 
-colony4 <- colony3
+colony4 <- colony3 |>
+  select(year, colony_lost, colony_added) |>
+  group_by(year) |>
+  summarise(lost = sum(colony_lost, na.rm = TRUE),
+            add = sum(colony_added, na.rm = TRUE))
 
-ggplot(colony4) +
-  geom_bar()
+colony4 <- pivot_longer(colony4, cols = c(lost, add),
+                        names_to = "variable", values_to = "value")
+
+ggplot(colony4, aes(x = year, y = value, fill = variable)) +
+  geom_bar() +
+  labs(x = year, y = value)
